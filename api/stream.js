@@ -98,6 +98,7 @@ async function parseFeed(source) {
       try {
         timestamp = new Date(item.pubDate).getTime();
         if (isNaN(timestamp)) timestamp = Date.now();
+        if (timestamp > Date.now()) timestamp = Date.now(); // clamp future dates
       } catch { timestamp = Date.now(); }
       return { ...item, timestamp };
     });
