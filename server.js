@@ -235,9 +235,20 @@ async function parseFeed(source) {
       .map(item => {
         let timestamp;
         try {
-          timestamp = new Date(item.pubDate).getTime();
+          const raw = item.pubDate || '';
+          // Fix Ice format: "2026/04/07 14:07:03" -> add +0300
+          const normalized = raw.match(/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/)
+            ? raw.replace(/\//g, '-') + ' +0300'
+            : raw;
+          timestamp = new Date(normalized).getTime();
           if (isNaN(timestamp)) timestamp = Date.now();
-          if (timestamp > Date.now()) timestamp = Date.now(); // Clamp future dates
+
+          const now = Date.now();
+          if (timestamp > now) {
+            // Source sent IST time labeled as GMT (e.g. Walla) - subtract 3 hours
+            const istFixed = timestamp - 3 * 60 * 60 * 1000;
+            timestamp = istFixed > now ? now : istFixed;
+          }
         } catch {
           timestamp = Date.now();
         }
