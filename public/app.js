@@ -259,7 +259,11 @@
 
   // --- Render News Feed ---
   function renderNewsFeed(items) {
-    let filtered = items;
+    const now = Date.now();
+    let filtered = items.map(item => ({
+      ...item,
+      timestamp: item.timestamp > now ? now : item.timestamp
+    }));
 
     // 0. Filter out disabled sources
     if (state.disabledSources.length > 0) {
