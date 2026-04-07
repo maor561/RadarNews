@@ -402,15 +402,14 @@
 
         state.pendingData = data;
 
-        // Always apply - so new items always appear at the top
-        applyPendingItems();
-
-        // Sound + Push when there are new items
+        // Send push BEFORE applying (before lastItemIds updates)
         if (!state.isFirstLoad && newItems.length > 0) {
           if (state.soundEnabled) playNotificationSound();
-          // Send push for first new item only (avoid spam)
-          if (newItems[0]) sendPushNotification(newItems[0]);
+          newItems.forEach(item => sendPushNotification(item));
         }
+
+        // Always apply - so new items always appear at the top
+        applyPendingItems();
 
         if (data.hebrewDate) {
           dom.hebrewDate.textContent = data.hebrewDate;
@@ -533,6 +532,10 @@
     updateCounters();
     
     renderNewsFeed(state.items);
+
+    // Update lastItemIds to mark all as seen (for next poll)
+    const allItems = Array.from(state.items).filter(i => !state.disabledSources.includes(i.source));
+    state.lastItemIds = new Set(allItems.map(item => item.title + item.source));
 
     // Always scroll to top on live view so new items are visible
     if (state.activeDate === 'live') {
