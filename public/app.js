@@ -408,8 +408,12 @@
         // Apply items to feed
         applyPendingItems();
 
+        // Debug log
+        console.log(`📡 Poll: got ${data.items.length} items, ${newItems.length} new, lastIds: ${state.lastItemIds.size}`);
+
         // Sound + Push AFTER apply (feed updated) but based on pre-apply snapshot
         if (!state.isFirstLoad && newItems.length > 0) {
+          console.log(`🔔 New items: ${newItems.map(i => i.sourceName).join(', ')}`);
           if (state.soundEnabled) playNotificationSound();
           // Only send notification for the newest item (first in list)
           if (newItems[0]) sendPushNotification(newItems[0]);
