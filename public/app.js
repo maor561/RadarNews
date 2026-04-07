@@ -317,10 +317,6 @@
       const fallbackFavicon = sourceInfo && sourceInfo.domain ? `https://www.google.com/s2/favicons?domain=${sourceInfo.domain}&sz=64` : '';
       const initials = (item.sourceName || 'מ').charAt(0);
 
-      if (isNew && state.soundEnabled) {
-        playNotificationSound();
-      }
-
       return `
         <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer"
            class="news-item ${isNew ? 'is-new' : ''} ${isCritical ? 'critical-alert' : ''}"
@@ -540,10 +536,7 @@
     updateCounters();
     
     renderNewsFeed(state.items);
-
-    // Update lastItemIds to mark all as seen (for next poll)
-    const allItems = Array.from(state.items).filter(i => !state.disabledSources.includes(i.source));
-    state.lastItemIds = new Set(allItems.map(item => item.title + item.source));
+    // lastItemIds updated by renderNewsFeed, don't update again here
 
     // Always scroll to top on live view so new items are visible
     if (state.activeDate === 'live') {
