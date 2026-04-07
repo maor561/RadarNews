@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מבזקון | כל מבזקי החדשות של ישראל נמרכז אחד</title>
+  <meta name="description"
+    content="מבזקון - מרכז מבזקי חדשות מהיר מכל האתרים הגדולים בישראל: Ynet, N12, וואלה, ערוץ 14, כאן 11, רוטר ועוד.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📰</text></svg>">
+</head>
+
+<body class="dark-mode">
+
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <div class="header-right">
+        <div class="logo">
+          <img src="logo.png?v=2" alt="מבזקון" class="main-logo-img">
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="live-clock" id="liveClock">
+          <div class="clock-time" id="clockTime">--:--:--</div>
+          <div class="clock-date" id="clockDate">טוען...</div>
+          <div class="clock-hebrew" id="hebrewDate"></div>
+        </div>
+      </div>
+      <div class="header-left">
+        <div class="header-widget-group">
+          <div class="header-stats-controls">
+            <div class="header-stats">
+              <div class="stat-item" id="totalCount">
+                <span class="stat-number">0</span>
+                <span class="stat-label">מבזקים</span>
+              </div>
+              <div class="stat-item" id="sourcesCount">
+                <span class="stat-number">0</span>
+                <span class="stat-label">מקורות</span>
+              </div>
+            </div>
+            <div class="header-controls">
+              <button class="control-btn" id="sourceSettingsBtn" title="ניהול מקורות">⚙️</button>
+              <button class="control-btn" id="soundToggle" title="השתק/הפעל צליל">
+                <span class="sound-on">🔔</span>
+                <span class="sound-off" style="display:none;">🔕</span>
+              </button>
+              <button class="control-btn" id="themeToggle" title="מצב בהיר/כהה">
+                <span class="theme-dark">☀️</span>
+                <span class="theme-light" style="display:none;">🌙</span>
+              </button>
+              <button class="control-btn" id="presentationToggle" title="מצב טלוויזיה / תצוגה">📺</button>
+              <button class="control-btn" id="refreshBtn" title="רעננו עכשיו">🔄</button>
+            </div>
+          </div>
+          <!-- Weather as the LAST child visually in RTL means it is at the FAR LEFT edge -->
+          <div class="weather-widget" id="weatherWidget"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Unified Navigation Bar -->
+  <section class="unified-nav">
+    <div class="unified-nav-inner">
+      <div class="archive-group" id="archiveBar">
+        <!-- Date tabs injected here -->
+      </div>
+      
+      <div class="nav-divider"></div>
+
+      <nav class="source-group" id="sourceTabs">
+        <button class="source-tab active compact" data-source="all" id="tab-all">
+          <span class="tab-icon">📋</span>
+          <span class="tab-count" id="count-all">0</span>
+        </button>
+        <!-- Source tabs from app.js -->
+      </nav>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState">
+      <div class="loading-spinner"></div>
+      <p>טוען מבזקים...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-state" id="errorState" style="display:none;">
+      <span class="error-icon">⚠️</span>
+      <p>שגיאה בטעינת המבזקים</p>
+      <button class="retry-btn" onclick="fetchNews()">נסה שוב</button>
+    </div>
+
+    <!-- News Feed -->
+    <div class="news-feed" id="newsFeed" style="display:none;">
+      <!-- News items injected by JS -->
+    </div>
+
+    <!-- Last Update Info -->
+    <div class="update-info" id="updateInfo">
+      <span id="lastUpdateText">ממתין לעדכון...</span>
+    </div>
+  </main>
+
+  <!-- QR Code (Digital Signage) -->
+  <div class="qr-container" id="qrContainer">
+    <div class="qr-text">סרוק למבזקים בנייד</div>
+    <img id="qrImage" src="" alt="QR Code" />
+  </div>
+
+  <!-- Source Management Panel -->
+  <div class="source-panel-overlay" id="sourcePanelOverlay"></div>
+  <div class="source-panel" id="sourcePanel">
+    <div class="source-panel-header">
+      <h3>⚙️ ניהול מקורות</h3>
+      <button class="source-panel-close" id="sourcePanelClose">✕</button>
+    </div>
+    <div class="source-panel-body" id="sourcePanelBody">
+      <!-- Source toggles injected by JS -->
+    </div>
+    <div class="source-panel-footer">
+      <button class="source-panel-btn" id="enableAllSources">הפעל הכל</button>
+      <button class="source-panel-btn secondary" id="disableAllSources">כבה הכל</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
