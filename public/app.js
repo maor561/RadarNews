@@ -411,7 +411,8 @@
         // Sound + Push AFTER apply (feed updated) but based on pre-apply snapshot
         if (!state.isFirstLoad && newItems.length > 0) {
           if (state.soundEnabled) playNotificationSound();
-          newItems.forEach(item => sendPushNotification(item));
+          // Only send notification for the newest item (first in list)
+          if (newItems[0]) sendPushNotification(newItems[0]);
         }
 
         if (data.hebrewDate) {
