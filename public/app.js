@@ -433,12 +433,13 @@
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Sound + Push for new items
+        // Sound + Push after scroll animation (~300ms)
         if (newItems.length > 0) {
-          if (state.soundEnabled) playNotificationSound();
-          // Notify for newest item only
-          const newest = newItems.sort((a, b) => b.timestamp - a.timestamp)[0];
-          sendPushNotification(newest);
+          setTimeout(() => {
+            if (state.soundEnabled) playNotificationSound();
+            const newest = newItems.sort((a, b) => b.timestamp - a.timestamp)[0];
+            sendPushNotification(newest);
+          }, 400);
         }
 
         updateSourceHealth(data.sources);
