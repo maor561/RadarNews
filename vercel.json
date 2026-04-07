@@ -1,27 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.js"
-    },
-    {
-      "src": "/(.+\\.(js|css|png|jpg|ico|svg|woff|woff2))",
-      "dest": "/public/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/index.html"
-    }
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/stream", "destination": "/api/stream.js" },
+    { "source": "/api/feeds", "destination": "/api/feeds.js" },
+    { "source": "/api/weather", "destination": "/api/weather.js" },
+    { "source": "/api/sources", "destination": "/api/sources.js" },
+    { "source": "/api/hebrew-date", "destination": "/api/hebrew-date.js" }
   ]
 }
