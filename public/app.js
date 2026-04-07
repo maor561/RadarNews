@@ -375,17 +375,17 @@
     return map[name] || name.charAt(0);
   }
 
-  // --- Fetch News (SSE Stream) ---
+  // --- Fetch News (Polling instead of SSE for Vercel) ---
   function connectStream() {
     dom.loadingState.style.display = 'flex';
     dom.errorState.style.display = 'none';
     dom.newsFeed.style.display = 'none';
 
-    const evtSource = new EventSource('/api/stream');
-
-    evtSource.onmessage = (event) => {
+    const pollData = async () => {
       try {
-        const data = JSON.parse(event.data);
+        const response = await fetch('/api/stream');
+        const data = await response.json();
+
         if (!data.success) return;
 
         // Detect new items
@@ -396,7 +396,7 @@
 
         // Always apply updates
         state.pendingData = data;
-        
+
         let alertCount = newItems.length;
         if (state.activeSource !== 'all') {
            alertCount = newItems.filter(i => i.source === state.activeSource).length;
@@ -420,28 +420,22 @@
           dom.newsFeed.style.display = 'flex';
           state.isFirstLoad = false;
         } else {
-          // Update health status and counters dynamically
           updateSourceHealth(data.sources);
           updateCounters();
         }
 
         const updateTime = new Date(data.lastUpdate);
         dom.lastUpdateText.textContent = `עדכון אחרון: ${formatTime(updateTime.getTime())}`;
-
       } catch(err) {
-        console.error('Stream parse error:', err);
+        console.error('Stream error:', err);
       }
     };
 
-    evtSource.onerror = (err) => {
-      console.error('SSE Error:', err);
-      // If the connection is closed, attempt to reload after 5 seconds
-      if(evtSource.readyState === EventSource.CLOSED) {
-         setTimeout(() => {
-           window.location.reload();
-         }, 5000);
-      }
-    };
+    // Initial fetch
+    pollData();
+
+    // Poll every 15 seconds
+    setInterval(pollData, 15000);
   }
 
   // --- Update Counters (Dynamic per Day) ---
