@@ -299,13 +299,11 @@
       return;
     }
 
-    const newItemIds = new Set(filtered.map(item => item.title + item.source));
-
     // Limit to 10 items in Presentation Mode as requested
     const itemsToRenderFinal = state.isPresentationMode ? filtered.slice(0, 10) : filtered;
 
     dom.newsFeed.innerHTML = itemsToRenderFinal.map((item, index) => {
-      const isNew = !state.isFirstLoad && !state.lastItemIds.has(item.title + item.source);
+      const isNew = false; // handled by pollData now
       
       // Keywords for high-impact alerts
       const criticalKeywords = ['צבע אדום', 'חדירת מחבלים', 'פיגוע', 'התרעה'];
@@ -347,7 +345,6 @@
       `;
     }).join('');
 
-    state.lastItemIds = newItemIds;
   }
 
   function playNotificationSound() {
@@ -390,50 +387,64 @@
 
         if (!data.success) return;
 
-        // Snapshot of known IDs BEFORE any update
-        const knownIds = new Set(state.lastItemIds);
-
-        // Detect truly new items using the snapshot
-        let newItems = [];
-        if (!state.isFirstLoad) {
-          newItems = data.items.filter(item => !knownIds.has(item.title + item.source));
-        }
-
-        state.pendingData = data;
-
-        // Apply items to feed
-        applyPendingItems();
-
-        // Debug log
-        console.log(`📡 Poll: got ${data.items.length} items, ${newItems.length} new, lastIds: ${state.lastItemIds.size}`);
-
-        // Sound + Push AFTER apply (feed updated) but based on pre-apply snapshot
-        if (!state.isFirstLoad && newItems.length > 0) {
-          console.log(`🔔 New items: ${newItems.map(i => i.sourceName).join(', ')}`);
-          if (state.soundEnabled) playNotificationSound();
-          // Only send notification for the newest item (first in list)
-          if (newItems[0]) sendPushNotification(newItems[0]);
-        }
-
-        if (data.hebrewDate) {
-          dom.hebrewDate.textContent = data.hebrewDate;
-        }
-
         if (state.isFirstLoad) {
+          // First load - init everything
+          const now = Date.now();
+          state.items = data.items.map(item => ({
+            ...item,
+            timestamp: item.timestamp > now ? now : item.timestamp
+          }));
+          state.sources = [...data.sources];
+          // Mark ALL server items as known
+          state.lastItemIds = new Set(data.items.map(i => i.title + i.source));
+
           renderArchiveTabs();
           renderSourceTabs(data.sources);
           applyDisabledSources();
           updateCounters();
+          renderNewsFeed(state.items);
           dom.loadingState.style.display = 'none';
           dom.newsFeed.style.display = 'flex';
           state.isFirstLoad = false;
-        } else {
-          updateSourceHealth(data.sources);
-          updateCounters();
+
+          if (data.hebrewDate) dom.hebrewDate.textContent = data.hebrewDate;
+          dom.lastUpdateText.textContent = `עדכון אחרון: ${formatTime(Date.now())}`;
+          return;
         }
 
-        const updateTime = new Date(data.lastUpdate);
-        dom.lastUpdateText.textContent = `עדכון אחרון: ${formatTime(updateTime.getTime())}`;
+        // Detect new items vs ALL known IDs (not just rendered ones)
+        const newItems = data.items.filter(item => !state.lastItemIds.has(item.title + item.source));
+
+        // Update ALL known IDs immediately (before render, to avoid race)
+        data.items.forEach(item => state.lastItemIds.add(item.title + item.source));
+
+        // Update state and re-render
+        const now = Date.now();
+        state.items = data.items.map(item => ({
+          ...item,
+          timestamp: item.timestamp > now ? now : item.timestamp
+        }));
+        state.sources = [...data.sources];
+
+        updateCounters();
+        renderNewsFeed(state.items);
+
+        if (state.activeDate === 'live') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Sound + Push for new items
+        if (newItems.length > 0) {
+          if (state.soundEnabled) playNotificationSound();
+          // Notify for newest item only
+          const newest = newItems.sort((a, b) => b.timestamp - a.timestamp)[0];
+          sendPushNotification(newest);
+        }
+
+        updateSourceHealth(data.sources);
+        if (data.hebrewDate) dom.hebrewDate.textContent = data.hebrewDate;
+        dom.lastUpdateText.textContent = `עדכון אחרון: ${formatTime(Date.now())}`;
+
       } catch(err) {
         console.error('Stream error:', err);
       }
