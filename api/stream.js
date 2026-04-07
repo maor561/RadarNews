@@ -126,15 +126,16 @@ module.exports = async (req, res) => {
   try {
     const itemStore = new Map();
 
-    for (const source of FEED_SOURCES) {
-      const fetchedItems = await parseFeed(source);
+    // Fetch all sources in parallel instead of sequentially
+    const results = await Promise.all(FEED_SOURCES.map(source => parseFeed(source)));
+    results.forEach(fetchedItems => {
       fetchedItems.forEach(item => {
         const key = item.source + '_' + item.title;
         if (!itemStore.has(key)) {
           itemStore.set(key, item);
         }
       });
-    }
+    });
 
     const items = Array.from(itemStore.values()).sort((a, b) => b.timestamp - a.timestamp);
     const todayDDMM = new Date().toLocaleDateString('he-IL');
