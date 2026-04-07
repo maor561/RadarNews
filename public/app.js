@@ -394,22 +394,25 @@
 
         if (!data.success) return;
 
-        // Detect new items
+        // Snapshot of known IDs BEFORE any update
+        const knownIds = new Set(state.lastItemIds);
+
+        // Detect truly new items using the snapshot
         let newItems = [];
         if (!state.isFirstLoad) {
-          newItems = data.items.filter(item => !state.lastItemIds.has(item.title + item.source));
+          newItems = data.items.filter(item => !knownIds.has(item.title + item.source));
         }
 
         state.pendingData = data;
 
-        // Send push BEFORE applying (before lastItemIds updates)
+        // Apply items to feed
+        applyPendingItems();
+
+        // Sound + Push AFTER apply (feed updated) but based on pre-apply snapshot
         if (!state.isFirstLoad && newItems.length > 0) {
           if (state.soundEnabled) playNotificationSound();
           newItems.forEach(item => sendPushNotification(item));
         }
-
-        // Always apply - so new items always appear at the top
-        applyPendingItems();
 
         if (data.hebrewDate) {
           dom.hebrewDate.textContent = data.hebrewDate;
@@ -685,7 +688,6 @@
   function sendPushNotification(item) {
     if (!state.pushEnabled) return;
     if (Notification.permission !== 'granted') return;
-    if (document.visibilityState === 'visible') return; // Only when tab is not focused
 
     try {
       const n = new Notification(item.sourceName + ' | מבזקון', {
