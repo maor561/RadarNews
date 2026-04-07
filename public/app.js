@@ -303,7 +303,7 @@
     const itemsToRenderFinal = state.isPresentationMode ? filtered.slice(0, 10) : filtered;
 
     dom.newsFeed.innerHTML = itemsToRenderFinal.map((item, index) => {
-      const isNew = false; // handled by pollData now
+      const isNew = !state.isFirstLoad && state.newItemIds && state.newItemIds.has(item.title + item.source);
       
       // Keywords for high-impact alerts
       const criticalKeywords = ['צבע אדום', 'חדירת מחבלים', 'פיגוע', 'התרעה'];
@@ -397,6 +397,7 @@
           state.sources = [...data.sources];
           // Mark ALL server items as known
           state.lastItemIds = new Set(data.items.map(i => i.title + i.source));
+          state.newItemIds = new Set();
 
           renderArchiveTabs();
           renderSourceTabs(data.sources);
@@ -414,6 +415,9 @@
 
         // Detect new items vs ALL known IDs (not just rendered ones)
         const newItems = data.items.filter(item => !state.lastItemIds.has(item.title + item.source));
+
+        // Save new items for visual highlighting
+        state.newItemIds = new Set(newItems.map(i => i.title + i.source));
 
         // Update ALL known IDs immediately (before render, to avoid race)
         data.items.forEach(item => state.lastItemIds.add(item.title + item.source));
