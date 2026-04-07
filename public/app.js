@@ -451,12 +451,14 @@
       if (countEl) countEl.textContent = count;
     });
 
-    // Update global stats - filter out disabled sources
+    // Update global stats - same logic as "all" tab: today only, excluding disabled
     let currentFeed = items.filter(i => !state.disabledSources.includes(i.source));
     if (state.activeDate !== 'live') {
       currentFeed = currentFeed.filter(i => getDDMM(i.timestamp) === state.activeDate);
+    } else {
+      currentFeed = currentFeed.filter(i => getDDMM(i.timestamp) === todayDDMM);
     }
-    
+
     if (dom.totalCount) dom.totalCount.textContent = currentFeed.length;
     
     // Update sources count (active sources only)
