@@ -515,7 +515,11 @@
     const data = state.pendingData;
     
     // Force deep update of items
-    state.items = [...data.items];
+    const now = Date.now();
+    state.items = data.items.map(item => ({
+      ...item,
+      timestamp: item.timestamp > now ? now : item.timestamp
+    }));
     state.sources = [...data.sources];
     state.pendingData = null;
     
