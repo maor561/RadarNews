@@ -661,26 +661,25 @@
     }
 
     if (state.pushEnabled) {
-      // Turn off
       state.pushEnabled = false;
       localStorage.setItem('push-notifications', 'off');
       updatePushBtn();
       return;
     }
 
-    // Request permission
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       state.pushEnabled = true;
       localStorage.setItem('push-notifications', 'on');
-      new Notification('מבזקון', {
-        body: 'התראות מבזקים הופעלו!',
-        icon: '/favicon.png'
+      // Test notification
+      new Notification('📡 מבזקון - התראות הופעלו', {
+        body: 'תקבל התראות Windows על מבזקים חדשים',
+        icon: 'https://radar-news-wine.vercel.app/favicon.png'
       });
     } else {
       state.pushEnabled = false;
       localStorage.setItem('push-notifications', 'off');
-      alert('לא ניתן להפעיל התראות - נא לאשר גישה בהגדרות הדפדפן');
+      alert('אשר התראות בדפדפן: לחץ על מנעול בשורת הכתובת → התראות → אפשר');
     }
     updatePushBtn();
   }
@@ -688,21 +687,22 @@
   function sendPushNotification(item) {
     if (!state.pushEnabled) return;
     if (Notification.permission !== 'granted') return;
-
     try {
-      const n = new Notification(item.sourceName + ' | מבזקון', {
+      const n = new Notification('📰 ' + item.sourceName + ' | מבזקון', {
         body: item.title,
-        icon: item.sourceLogo || '/favicon.png',
-        badge: '/favicon.png',
-        tag: item.source + '_' + item.title.slice(0, 30), // avoid duplicates
-        renotify: false
+        icon: 'https://radar-news-wine.vercel.app/favicon.png',
+        requireInteraction: false,
+        silent: false
       });
       n.onclick = () => {
         window.focus();
         if (item.link) window.open(item.link, '_blank');
         n.close();
       };
-    } catch(e) {}
+      setTimeout(() => n.close(), 8000);
+    } catch(e) {
+      console.warn('Push notification error:', e);
+    }
   }
 
   // --- Sound Toggle ---
