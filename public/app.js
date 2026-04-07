@@ -710,6 +710,7 @@
       };
       setTimeout(() => n.close(), 8000);
     } catch(e) {
+      console.warn('Push notification failed:', e);
       console.warn('Push notification error:', e);
     }
   }
@@ -856,6 +857,15 @@
       state.soundEnabled = true;
       dom.soundToggle.querySelector('.sound-on').style.display = 'inline';
       dom.soundToggle.querySelector('.sound-off').style.display = 'none';
+    }
+
+    // Restore push notification state
+    if (state.pushEnabled && Notification.permission === 'granted') {
+      updatePushBtn();
+    } else if (state.pushEnabled && Notification.permission !== 'granted') {
+      // Permission was revoked - reset state
+      state.pushEnabled = false;
+      localStorage.setItem('push-notifications', 'off');
     }
   }
 
