@@ -11,6 +11,7 @@
     sources: [],
     activeSource: 'all',
     soundEnabled: true,
+    pushEnabled: localStorage.getItem('push-notifications') === 'on',
     isDark: true,
     lastItemIds: new Set(),
     refreshInterval: 10, // seconds
@@ -52,7 +53,8 @@
     sourcePanelClose: document.getElementById('sourcePanelClose'),
     sourcePanelBody: document.getElementById('sourcePanelBody'),
     enableAllSources: document.getElementById('enableAllSources'),
-    disableAllSources: document.getElementById('disableAllSources')
+    disableAllSources: document.getElementById('disableAllSources'),
+    pushToggle: document.getElementById('pushToggle')
   };
 
   // --- Clock ---
@@ -403,9 +405,11 @@
         // Always apply - so new items always appear at the top
         applyPendingItems();
 
-        // Sound only when there are new items
-        if (!state.isFirstLoad && state.soundEnabled && newItems.length > 0) {
-          playNotificationSound();
+        // Sound + Push when there are new items
+        if (!state.isFirstLoad && newItems.length > 0) {
+          if (state.soundEnabled) playNotificationSound();
+          // Send push for first new item only (avoid spam)
+          if (newItems[0]) sendPushNotification(newItems[0]);
         }
 
         if (data.hebrewDate) {
@@ -633,6 +637,69 @@
     }
   }
 
+  // --- Push Notifications ---
+  function updatePushBtn() {
+    if (!dom.pushToggle) return;
+    const onIcon = dom.pushToggle.querySelector('.push-on');
+    const offIcon = dom.pushToggle.querySelector('.push-off');
+    const isOn = state.pushEnabled && Notification.permission === 'granted';
+    onIcon.style.display = isOn ? 'inline' : 'none';
+    offIcon.style.display = isOn ? 'none' : 'inline';
+    dom.pushToggle.style.outline = isOn ? '2px solid var(--accent)' : '';
+  }
+
+  async function togglePush() {
+    if (!('Notification' in window)) {
+      alert('הדפדפן שלך לא תומך בהתראות');
+      return;
+    }
+
+    if (state.pushEnabled) {
+      // Turn off
+      state.pushEnabled = false;
+      localStorage.setItem('push-notifications', 'off');
+      updatePushBtn();
+      return;
+    }
+
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      state.pushEnabled = true;
+      localStorage.setItem('push-notifications', 'on');
+      new Notification('מבזקון', {
+        body: 'התראות מבזקים הופעלו!',
+        icon: '/favicon.png'
+      });
+    } else {
+      state.pushEnabled = false;
+      localStorage.setItem('push-notifications', 'off');
+      alert('לא ניתן להפעיל התראות - נא לאשר גישה בהגדרות הדפדפן');
+    }
+    updatePushBtn();
+  }
+
+  function sendPushNotification(item) {
+    if (!state.pushEnabled) return;
+    if (Notification.permission !== 'granted') return;
+    if (document.visibilityState === 'visible') return; // Only when tab is not focused
+
+    try {
+      const n = new Notification(item.sourceName + ' | מבזקון', {
+        body: item.title,
+        icon: item.sourceLogo || '/favicon.png',
+        badge: '/favicon.png',
+        tag: item.source + '_' + item.title.slice(0, 30), // avoid duplicates
+        renotify: false
+      });
+      n.onclick = () => {
+        window.focus();
+        if (item.link) window.open(item.link, '_blank');
+        n.close();
+      };
+    } catch(e) {}
+  }
+
   // --- Sound Toggle ---
   function toggleSound() {
     state.soundEnabled = !state.soundEnabled;
@@ -817,6 +884,8 @@
     dom.themeToggle.addEventListener('click', toggleTheme);
     dom.presentationToggle.addEventListener('click', togglePresentationMode);
     dom.soundToggle.addEventListener('click', toggleSound);
+    dom.pushToggle.addEventListener('click', togglePush);
+    updatePushBtn();
     // Handle autoplay audio interaction
     document.addEventListener('mousedown', initAudio);
     document.addEventListener('keydown', initAudio);
