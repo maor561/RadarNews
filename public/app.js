@@ -282,11 +282,12 @@
       filtered = filtered.filter(item => item.source === state.activeSource);
     }
 
-    // 3. Strict Sorting: Always newest first (highest timestamp)
+    // 3. Sort: new items first, then by timestamp
     filtered.sort((a, b) => {
-      const diff = b.timestamp - a.timestamp;
-      if (diff !== 0) return diff;
-      return b.title.localeCompare(a.title);
+      const aIsNew = state.newItemIds && state.newItemIds.has(a.title + a.source) ? 1 : 0;
+      const bIsNew = state.newItemIds && state.newItemIds.has(b.title + b.source) ? 1 : 0;
+      if (bIsNew !== aIsNew) return bIsNew - aIsNew;
+      return b.timestamp - a.timestamp;
     });
 
     if (filtered.length === 0) {
