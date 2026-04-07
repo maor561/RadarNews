@@ -15,6 +15,25 @@ const FEED_SOURCES = [
   { id: 'ice', nameHe: 'אייס', url: 'https://www.ice.co.il/rss/', domain: 'ice.co.il', logoUrl: 'https://www.google.com/s2/favicons?domain=ice.co.il&sz=128', color: '#004a99' }
 ];
 
+function decodeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#8217;/g, '\u2019')
+    .replace(/&#8216;/g, '\u2018')
+    .replace(/&#8220;/g, '\u201C')
+    .replace(/&#8221;/g, '\u201D')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .trim();
+}
+
 function fetchUrl(url, timeout = 8000) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : require('http');
@@ -63,10 +82,10 @@ async function parseFeed(source) {
       const channel = result.rss.channel;
       const rawItems = Array.isArray(channel.item) ? channel.item : (channel.item ? [channel.item] : []);
       items = rawItems.map(item => ({
-        title: (item.title || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(),
+        title: decodeHtml(item.title || ''),
         link: (item.link || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(),
         pubDate: (item.pubDate || item.pubdate || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(),
-        description: (item.description || '').replace(/<[^>]*>/g, '').trim(),
+        description: decodeHtml((item.description || '').replace(/<[^>]*>/g, '')),
         source: source.id,
         sourceName: source.nameHe,
         sourceColor: source.color,

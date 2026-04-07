@@ -186,7 +186,7 @@ async function parseFeed(source) {
       const channel = result.rss.channel;
       const rawItems = Array.isArray(channel.item) ? channel.item : (channel.item ? [channel.item] : []);
       items = rawItems.map(item => ({
-        title: cleanCDATA(item.title || ''),
+        title: cleanText(cleanCDATA(item.title || '')),
         link: cleanCDATA(item.link || ''),
         pubDate: cleanCDATA(item.pubDate || item.pubdate || ''),
         description: cleanText(cleanCDATA(item.description || '')),
@@ -201,7 +201,7 @@ async function parseFeed(source) {
     else if (result.feed && result.feed.entry) {
       const entries = Array.isArray(result.feed.entry) ? result.feed.entry : [result.feed.entry];
       items = entries.map(entry => ({
-        title: cleanCDATA(typeof entry.title === 'object' ? (entry.title._ || entry.title['$']?.term || '') : (entry.title || '')),
+        title: cleanText(cleanCDATA(typeof entry.title === 'object' ? (entry.title._ || entry.title['$']?.term || '') : (entry.title || ''))),
         link: typeof entry.link === 'object' ? (entry.link['$']?.href || entry.link.href || '') : (entry.link || ''),
         pubDate: entry.published || entry.updated || '',
         description: cleanText(cleanCDATA(typeof entry.summary === 'object' ? (entry.summary._ || '') : (entry.summary || entry.content || ''))),
@@ -217,7 +217,7 @@ async function parseFeed(source) {
       const rdf = result['rdf:rdf'] || result.rdf;
       const rawItems = Array.isArray(rdf.item) ? rdf.item : (rdf.item ? [rdf.item] : []);
       items = rawItems.map(item => ({
-        title: cleanCDATA(item.title || ''),
+        title: cleanText(cleanCDATA(item.title || '')),
         link: cleanCDATA(item.link || ''),
         pubDate: cleanCDATA(item['dc:date'] || item.pubdate || item.pubDate || ''),
         description: cleanText(cleanCDATA(item.description || '')),
@@ -262,7 +262,21 @@ function cleanCDATA(str) {
 
 function cleanText(str) {
   if (typeof str !== 'string') return '';
-  return str.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+  return str
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#8217;/g, '\u2019')
+    .replace(/&#8216;/g, '\u2018')
+    .replace(/&#8220;/g, '\u201C')
+    .replace(/&#8221;/g, '\u201D')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .trim();
 }
 
 // --- Fetch All Feeds ---
