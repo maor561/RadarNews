@@ -398,17 +398,14 @@
           newItems = data.items.filter(item => !state.lastItemIds.has(item.title + item.source));
         }
 
-        // Always apply updates
         state.pendingData = data;
 
-        let alertCount = newItems.length;
-        if (state.activeSource !== 'all') {
-           alertCount = newItems.filter(i => i.source === state.activeSource).length;
-        }
+        // Always apply - so new items always appear at the top
+        applyPendingItems();
 
-        if (state.isFirstLoad || alertCount > 0) {
-           applyPendingItems();
-           if (!state.isFirstLoad && state.soundEnabled && alertCount > 0) playNotificationSound();
+        // Sound only when there are new items
+        if (!state.isFirstLoad && state.soundEnabled && newItems.length > 0) {
+          playNotificationSound();
         }
 
         if (data.hebrewDate) {
@@ -529,9 +526,9 @@
     
     updateCounters();
     
-    // Explicitly re-render feed to ensure the "10 latest" reflects the fresh data
     renderNewsFeed(state.items);
-    
+
+    // Always scroll to top on live view so new items are visible
     if (state.activeDate === 'live') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
