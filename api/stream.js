@@ -87,7 +87,7 @@ async function parseFeed(source) {
   }
 }
 
-export default async (req, res) => {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Content-Type', 'application/json');

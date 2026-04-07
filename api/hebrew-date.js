@@ -1,6 +1,6 @@
 const https = require('https');
 
-export default (req, res) => {
+module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   try {
