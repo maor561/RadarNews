@@ -224,8 +224,8 @@ body.light-mode::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 80px; /* Strong gap but keeps them together */
-  padding: 0 40px;
+  gap: 60px;
+  padding: 0 32px;
   width: 100%;
 }
 
@@ -243,16 +243,16 @@ body.light-mode::before {
 }
 
 .main-logo-img {
-  height: 130px;
+  height: 110px;
   width: auto;
   object-fit: contain;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
 }
 
 .main-logo-img:hover {
-  transform: scale(1.03) rotate(-1deg);
-  filter: drop-shadow(0 6px 15px rgba(0,0,0,0.3));
+  transform: scale(1.05) translateY(-2px);
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
 }
 
 .header-center {
@@ -614,8 +614,13 @@ body.light-mode::before {
 .news-feed {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  /* Unlimited scrolling restored */
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* --- News Item Card --- */
@@ -669,16 +674,17 @@ body.light-mode::before {
 }
 
 .news-item.is-new::after {
-  content: 'חדש';
+  content: 'NEW';
   position: absolute;
-  top: 8px;
-  left: 12px;
-  font-size: 10px;
-  font-weight: 700;
+  top: 10px;
+  left: 10px;
+  font-size: 9px;
+  font-weight: 800;
   background: var(--danger);
   color: white;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
   animation: pulse-badge 2s ease-in-out infinite;
 }
 
@@ -725,16 +731,23 @@ body.light-mode::before {
 }
 
 .source-badge {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  background: white; /* Base for logos */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background: white;
   position: relative;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+}
+
+.news-item:hover .source-badge {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: scale(1.08);
 }
 
 .badge-initials {
