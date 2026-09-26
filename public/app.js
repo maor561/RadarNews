@@ -466,15 +466,14 @@
       }
     };
 
-    // Poll every 15s while visible, every 60s in a background tab
-    // (still frequent enough for push notifications, 4x less traffic)
+    // Poll every 60s while visible (matches the 60s CDN cache), every 2 min in a background tab
     let pollTimer = null;
     const schedulePoll = () => {
       clearTimeout(pollTimer);
       pollTimer = setTimeout(async () => {
         await pollData();
         schedulePoll();
-      }, document.hidden ? 60000 : 15000);
+      }, document.hidden ? 120000 : 60000);
     };
 
     document.addEventListener('visibilitychange', async () => {

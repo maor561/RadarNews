@@ -122,10 +122,10 @@ async function parseFeed(source) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // Cache at Vercel's CDN for 15s so all visitors share one function run,
+  // Cache at Vercel's CDN for 60s so all visitors share one function run,
   // browsers always revalidate (ETag below -> 304 with empty body when unchanged)
   res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
-  res.setHeader('CDN-Cache-Control', 'public, s-maxage=15, stale-while-revalidate=30');
+  res.setHeader('CDN-Cache-Control', 'public, s-maxage=60, stale-while-revalidate=60');
   res.setHeader('Content-Type', 'application/json');
 
   try {
@@ -155,7 +155,7 @@ module.exports = async (req, res) => {
       count: items.filter(item => item.source === source.id).length
     }));
 
-    const sliced = items.slice(0, 500);
+    const sliced = items.slice(0, 200);
     const version = crypto.createHash('md5')
       .update(todayDDMM + sliced.map(i => i.source + i.title + i.timestamp).join('|'))
       .digest('hex').slice(0, 16);
