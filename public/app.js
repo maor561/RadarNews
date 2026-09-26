@@ -383,10 +383,18 @@
 
     const pollData = async () => {
       try {
-        const response = await fetch('/api/stream');
+        // no-cache = revalidate with ETag; server answers 304 (no body) when nothing changed
+        const response = await fetch('/api/stream', { cache: 'no-cache' });
         const data = await response.json();
 
         if (!data.success) return;
+
+        // Same data as last poll (browser served it from cache after a 304) - skip re-render
+        if (!state.isFirstLoad && data.version && data.version === state.lastVersion) {
+          dom.lastUpdateText.textContent = `עדכון אחרון: ${formatTime(Date.now())}`;
+          return;
+        }
+        state.lastVersion = data.version;
 
         if (state.isFirstLoad) {
           // First load - init everything
@@ -458,11 +466,27 @@
       }
     };
 
-    // Initial fetch
-    pollData();
+    // Poll every 15s while visible, every 60s in a background tab
+    // (still frequent enough for push notifications, 4x less traffic)
+    let pollTimer = null;
+    const schedulePoll = () => {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(async () => {
+        await pollData();
+        schedulePoll();
+      }, document.hidden ? 60000 : 15000);
+    };
 
-    // Poll every 15 seconds
-    setInterval(pollData, 15000);
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden) {
+        clearTimeout(pollTimer);
+        await pollData();
+      }
+      schedulePoll();
+    });
+
+    // Initial fetch
+    pollData().then(schedulePoll);
   }
 
   // --- Update Counters (Dynamic per Day) ---

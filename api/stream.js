@@ -1,6 +1,7 @@
 const https = require('https');
 const { parseStringPromise } = require('xml2js');
 const iconv = require('iconv-lite');
+const crypto = require('crypto');
 
 const FEED_SOURCES = [
   { id: 'ynet', nameHe: 'ידיעות אחרונות', url: 'https://www.ynet.co.il/Integration/StoryRss1854.xml', domain: 'ynet.co.il', logoUrl: 'https://www.google.com/s2/favicons?domain=ynet.co.il&sz=128', color: '#e81726' },
@@ -85,7 +86,8 @@ async function parseFeed(source) {
         title: decodeHtml(item.title || ''),
         link: (item.link || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(),
         pubDate: (item.pubDate || item.pubdate || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(),
-        description: decodeHtml((item.description || '').replace(/<[^>]*>/g, '')),
+        // Frontend shows only the first 100 chars - don't ship the rest
+        description: decodeHtml((item.description || '').replace(/<[^>]*>/g, '')).slice(0, 120),
         source: source.id,
         sourceName: source.nameHe,
         sourceColor: source.color,
@@ -120,7 +122,10 @@ async function parseFeed(source) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'no-cache');
+  // Cache at Vercel's CDN for 15s so all visitors share one function run,
+  // browsers always revalidate (ETag below -> 304 with empty body when unchanged)
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.setHeader('CDN-Cache-Control', 'public, s-maxage=15, stale-while-revalidate=30');
   res.setHeader('Content-Type', 'application/json');
 
   try {
@@ -150,12 +155,24 @@ module.exports = async (req, res) => {
       count: items.filter(item => item.source === source.id).length
     }));
 
+    const sliced = items.slice(0, 500);
+    const version = crypto.createHash('md5')
+      .update(todayDDMM + sliced.map(i => i.source + i.title + i.timestamp).join('|'))
+      .digest('hex').slice(0, 16);
+    const etag = `"${version}"`;
+    res.setHeader('ETag', etag);
+
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
+
     res.json({
       success: true,
+      version,
       total: items.length,
       sources: sources,
       lastUpdate: Date.now(),
-      items: items.slice(0, 500),
+      items: sliced,
       hebrewDate: todayDDMM
     });
   } catch (err) {
