@@ -93,6 +93,7 @@ const FEED_SOURCES = [
 
 module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('CDN-Cache-Control', 'public, s-maxage=86400');
   res.json({
     success: true,
     sources: FEED_SOURCES.map(s => ({

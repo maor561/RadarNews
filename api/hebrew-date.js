@@ -16,6 +16,7 @@ module.exports = (req, res) => {
       apiRes.on('end', () => {
         try {
           const parsed = JSON.parse(data);
+          res.setHeader('CDN-Cache-Control', 'public, s-maxage=3600');
           res.json(parsed);
         } catch(e) {
           res.json({ hebrew: '' });

@@ -162,7 +162,7 @@ module.exports = async (req, res) => {
     const etag = `"${version}"`;
     res.setHeader('ETag', etag);
 
-    if (req.headers['if-none-match'] === etag) {
+    if ((req.headers['if-none-match'] || '').replace(/^W\//, '') === etag) {
       return res.status(304).end();
     }
 

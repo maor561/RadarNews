@@ -199,7 +199,8 @@ function cleanText(str) {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.setHeader('CDN-Cache-Control', 'public, s-maxage=60, stale-while-revalidate=60');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -208,15 +209,15 @@ module.exports = async (req, res) => {
   try {
     const itemStore = new Map();
 
-    for (const source of FEED_SOURCES) {
-      const fetchedItems = await parseFeed(source);
+    const results = await Promise.all(FEED_SOURCES.map(source => parseFeed(source)));
+    results.forEach(fetchedItems => {
       fetchedItems.forEach(item => {
         const key = item.source + '_' + item.title;
         if (!itemStore.has(key)) {
           itemStore.set(key, item);
         }
       });
-    }
+    });
 
     const items = Array.from(itemStore.values()).sort((a, b) => b.timestamp - a.timestamp);
     const source = req.query.source;
